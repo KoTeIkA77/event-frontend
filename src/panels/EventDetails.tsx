@@ -1,15 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Panel,
-  PanelHeader,
-  PanelHeaderBack,
-  Group,
-  Div,
-  Button,
-  Title,
-  Text,
-  Header,
-} from '@vkontakte/vkui';
+import { Panel, PanelHeader, PanelHeaderBack, Group, Div, Button, Title, Text, Header } from '@vkontakte/vkui';
 import { useParams, useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
 import QRCode from 'react-qr-code';
 import api from '../api/client';
@@ -25,7 +15,7 @@ interface Event {
 
 export const EventDetails = ({ id }: { id: string }) => {
   const params = useParams();
-  const eventId = params?.eventId; // безопасное обращение
+  const eventId = params?.eventId;
   const routeNavigator = useRouteNavigator();
   const [event, setEvent] = useState<Event | null>(null);
   const [ticketCode, setTicketCode] = useState<string | null>(null);
@@ -33,10 +23,7 @@ export const EventDetails = ({ id }: { id: string }) => {
   const [registering, setRegistering] = useState(false);
 
   useEffect(() => {
-    if (!eventId) {
-      setLoading(false);
-      return;
-    }
+    if (!eventId) return;
     Promise.all([
       api.get('/events').then(res => res.data.find((e: Event) => e.id === Number(eventId))),
       api.get(`/events/${eventId}/my-ticket`).then(res => res.data.ticketCode)
@@ -59,39 +46,16 @@ export const EventDetails = ({ id }: { id: string }) => {
     }
   };
 
-  if (loading) {
-    return (
-      <Panel id={id}>
-        <PanelHeader before={<PanelHeaderBack onClick={() => routeNavigator.back()} />}>
-          Загрузка...
-        </PanelHeader>
-        <Div>Загрузка...</Div>
-      </Panel>
-    );
-  }
-
-  if (!event) {
-    return (
-      <Panel id={id}>
-        <PanelHeader before={<PanelHeaderBack onClick={() => routeNavigator.back()} />}>
-          Ошибка
-        </PanelHeader>
-        <Div>Мероприятие не найдено</Div>
-      </Panel>
-    );
-  }
+  if (loading) return <Panel id={id}><PanelHeader before={<PanelHeaderBack onClick={() => routeNavigator.back()} />}>Загрузка...</PanelHeader><Div>Загрузка...</Div></Panel>;
+  if (!event) return <Panel id={id}><PanelHeader before={<PanelHeaderBack onClick={() => routeNavigator.back()} />}>Ошибка</PanelHeader><Div>Мероприятие не найдено</Div></Panel>;
 
   return (
     <Panel id={id}>
-      <PanelHeader before={<PanelHeaderBack onClick={() => routeNavigator.back()} />}>
-        {event.title}
-      </PanelHeader>
+      <PanelHeader before={<PanelHeaderBack onClick={() => routeNavigator.back()} />}>{event.title}</PanelHeader>
       <Group>
         <Div>
           <Title level="1" weight="1">{event.title}</Title>
-          <Text style={{ marginTop: 8, color: 'var(--vkui--color_text_secondary)' }}>
-            {new Date(event.date).toLocaleString()}
-          </Text>
+          <Text style={{ marginTop: 8, color: 'var(--vkui--color_text_secondary)' }}>{new Date(event.date).toLocaleString()}</Text>
           {event.location && <Text>📍 {event.location}</Text>}
           {event.max_participants && <Text>👥 Мест: {event.max_participants}</Text>}
         </Div>
@@ -107,9 +71,7 @@ export const EventDetails = ({ id }: { id: string }) => {
           </Div>
         ) : (
           <Div>
-            <Button size="l" stretched onClick={handleRegister} loading={registering}>
-              Записаться на мероприятие
-            </Button>
+            <Button size="l" stretched onClick={handleRegister} loading={registering}>Записаться на мероприятие</Button>
           </Div>
         )}
       </Group>

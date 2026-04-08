@@ -1,14 +1,6 @@
 import { useState } from 'react';
 import {
-  Panel,
-  PanelHeader,
-  PanelHeaderBack,
-  Group,
-  FormItem,
-  Input,
-  Textarea,
-  Button,
-  Div,
+  Panel, PanelHeader, PanelHeaderBack, Group, FormItem, Input, Textarea, Button, Div
 } from '@vkontakte/vkui';
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
 import api from '../api/client';
@@ -49,33 +41,22 @@ export const CreateEvent = ({ id }: { id: string }) => {
       <Group>
         <form onSubmit={handleSubmit}>
           <FormItem top="Название" required>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input value={title} onChange={e => setTitle(e.target.value)} />
           </FormItem>
           <FormItem top="Описание">
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Textarea value={description} onChange={e => setDescription(e.target.value)} />
           </FormItem>
           <FormItem top="Дата и время" required>
-            <Input
-              type="datetime-local"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
+            <Input type="datetime-local" value={date} onChange={e => setDate(e.target.value)} />
           </FormItem>
-          <FormItem top="Место проведения">
-            <Input value={location} onChange={(e) => setLocation(e.target.value)} />
+          <FormItem top="Место">
+            <Input value={location} onChange={e => setLocation(e.target.value)} />
           </FormItem>
           <FormItem top="Макс. участников">
-            <Input
-              type="number"
-              value={maxParticipants}
-              onChange={(e) => setMaxParticipants(e.target.value)}
-              placeholder="Без ограничений"
-            />
+            <Input type="number" value={maxParticipants} onChange={e => setMaxParticipants(e.target.value)} placeholder="Без ограничений" />
           </FormItem>
           <Div>
-            <Button size="l" stretched type="submit" loading={loading}>
-              Опубликовать
-            </Button>
+            <Button size="l" stretched type="submit" loading={loading}>Опубликовать</Button>
           </Div>
         </form>
       </Group>
