@@ -11,6 +11,9 @@ const router = createHashRouter([
   { path: '/event/:eventId', panel: 'event-details', view: 'main' },
 ]);
 
+// Для отладки в консоли
+(window as any).__vk_router__ = router;
+
 const App = () => (
   <AppRoot>
     <SplitLayout>
