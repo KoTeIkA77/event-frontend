@@ -1,4 +1,3 @@
-import React from 'react';
 import { AppRoot, SplitLayout, SplitCol, View } from '@vkontakte/vkui';
 import { RouterProvider, createHashRouter } from '@vkontakte/vk-mini-apps-router';
 import { Home } from './panels/Home';
