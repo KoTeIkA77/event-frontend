@@ -31,6 +31,7 @@ export const Home = ({ id }: { id: string }) => {
   }, []);
 
   const goToCreateEvent = () => {
+    console.log('Кнопка нажата, переходим на /create-event');
     window.location.hash = '#/create-event';
   };
 
