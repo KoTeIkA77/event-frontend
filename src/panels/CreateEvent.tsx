@@ -1,8 +1,15 @@
 import { useState } from 'react';
 import {
-  Panel, PanelHeader, PanelHeaderBack, Group, FormItem, Input, Textarea, Button, Div
+  Panel,
+  PanelHeader,
+  PanelHeaderBack,
+  Group,
+  FormItem,
+  Input,
+  Textarea,
+  Button,
+  Div,
 } from '@vkontakte/vkui';
-import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
 import api from '../api/client';
 
 export const CreateEvent = ({ id }: { id: string }) => {
@@ -12,7 +19,6 @@ export const CreateEvent = ({ id }: { id: string }) => {
   const [location, setLocation] = useState('');
   const [maxParticipants, setMaxParticipants] = useState('');
   const [loading, setLoading] = useState(false);
-  const routeNavigator = useRouteNavigator();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +31,7 @@ export const CreateEvent = ({ id }: { id: string }) => {
         location,
         max_participants: maxParticipants ? parseInt(maxParticipants) : null,
       });
-      routeNavigator.back();
+      window.location.hash = '#/'; // ✅ возврат на главную после создания
     } catch (err: any) {
       alert(err.response?.data?.error || 'Ошибка создания');
     } finally {
@@ -35,7 +41,7 @@ export const CreateEvent = ({ id }: { id: string }) => {
 
   return (
     <Panel id={id}>
-      <PanelHeader before={<PanelHeaderBack onClick={() => routeNavigator.back()} />}>
+      <PanelHeader before={<PanelHeaderBack onClick={() => { window.location.hash = '#/'; }} />}>
         Новое мероприятие
       </PanelHeader>
       <Group>
@@ -53,10 +59,17 @@ export const CreateEvent = ({ id }: { id: string }) => {
             <Input value={location} onChange={e => setLocation(e.target.value)} />
           </FormItem>
           <FormItem top="Макс. участников">
-            <Input type="number" value={maxParticipants} onChange={e => setMaxParticipants(e.target.value)} placeholder="Без ограничений" />
+            <Input
+              type="number"
+              value={maxParticipants}
+              onChange={e => setMaxParticipants(e.target.value)}
+              placeholder="Без ограничений"
+            />
           </FormItem>
           <Div>
-            <Button size="l" stretched type="submit" loading={loading}>Опубликовать</Button>
+            <Button size="l" stretched type="submit" loading={loading}>
+              Опубликовать
+            </Button>
           </Div>
         </form>
       </Group>

@@ -1,33 +1,47 @@
+import { useState, useEffect } from 'react';
 import { AppRoot, SplitLayout, SplitCol, View } from '@vkontakte/vkui';
-import { RouterProvider, createHashRouter } from '@vkontakte/vk-mini-apps-router';
 import { Home } from './panels/Home';
 import { CreateEvent } from './panels/CreateEvent';
 import { EventDetails } from './panels/EventDetails';
 import '@vkontakte/vkui/dist/vkui.css';
 
-const router = createHashRouter([
-  { path: '/', panel: 'home', view: 'main' },
-  { path: '/create-event', panel: 'create-event', view: 'main' },
-  { path: '/event/:eventId', panel: 'event-details', view: 'main' },
-]);
+const App = () => {
+  const [activePanel, setActivePanel] = useState('home');
+  const [eventId, setEventId] = useState<string | null>(null);
 
-// Для отладки в консоли
-(window as any).__vk_router__ = router;
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1); // убираем '#'
+      if (hash.startsWith('/event/')) {
+        const id = hash.split('/')[2];
+        setEventId(id);
+        setActivePanel('event-details');
+      } else if (hash === '/create-event') {
+        setActivePanel('create-event');
+      } else {
+        setActivePanel('home');
+      }
+    };
 
-const App = () => (
-  <AppRoot>
-    <SplitLayout>
-      <SplitCol>
-        <RouterProvider router={router}>
-          <View id="main" activePanel="home">
+    window.addEventListener('hashchange', handleHashChange);
+    handleHashChange(); // начальная установка
+
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  return (
+    <AppRoot>
+      <SplitLayout>
+        <SplitCol>
+          <View id="main" activePanel={activePanel}>
             <Home id="home" />
             <CreateEvent id="create-event" />
-            <EventDetails id="event-details" />
+            <EventDetails id="event-details" eventId={eventId} />
           </View>
-        </RouterProvider>
-      </SplitCol>
-    </SplitLayout>
-  </AppRoot>
-);
+        </SplitCol>
+      </SplitLayout>
+    </AppRoot>
+  );
+};
 
 export default App;

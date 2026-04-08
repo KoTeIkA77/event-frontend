@@ -8,7 +8,6 @@ import {
   Button,
   Header,
 } from '@vkontakte/vkui';
-import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
 import api from '../api/client';
 
 interface Event {
@@ -23,7 +22,6 @@ interface Event {
 export const Home = ({ id }: { id: string }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const routeNavigator = useRouteNavigator();
 
   useEffect(() => {
     api.get('/events')
@@ -31,6 +29,14 @@ export const Home = ({ id }: { id: string }) => {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  const goToCreateEvent = () => {
+    window.location.hash = '#/create-event';
+  };
+
+  const goToEventDetails = (eventId: number) => {
+    window.location.hash = `#/event/${eventId}`;
+  };
 
   return (
     <Panel id={id}>
@@ -44,7 +50,7 @@ export const Home = ({ id }: { id: string }) => {
           <SimpleCell
             key={event.id}
             subtitle={`${new Date(event.date).toLocaleString()} · ${event.location || 'Онлайн'}`}
-            onClick={() => routeNavigator.push(`/event/${event.id}`)}
+            onClick={() => goToEventDetails(event.id)}
             chevron="auto"
           >
             {event.title}
@@ -52,11 +58,7 @@ export const Home = ({ id }: { id: string }) => {
         ))}
       </Group>
       <Div>
-        <Button
-          size="l"
-          stretched
-          onClick={() => routeNavigator.push('/create-event')}
-        >
+        <Button size="l" stretched onClick={goToCreateEvent}>
           + Создать мероприятие
         </Button>
       </Div>
