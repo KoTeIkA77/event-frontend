@@ -11,7 +11,7 @@ const App = () => {
 
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.slice(1); // убираем '#'
+      const hash = window.location.hash.slice(1);
       if (hash.startsWith('/event/')) {
         const id = hash.split('/')[2];
         setEventId(id);
@@ -24,8 +24,7 @@ const App = () => {
     };
 
     window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // начальная установка
-
+    handleHashChange();
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 

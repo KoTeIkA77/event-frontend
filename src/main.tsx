@@ -1,11 +1,12 @@
-import { createRoot } from 'react-dom/client';
-import vkBridge from '@vkontakte/vk-bridge';
-import { AppConfig } from './AppConfig.tsx';
+import ReactDOM from 'react-dom/client';
+import { AdaptivityProvider, ConfigProvider } from '@vkontakte/vkui';
+import App from './App';
+import '@vkontakte/vkui/dist/vkui.css';
 
-vkBridge.send('VKWebAppInit');
-
-createRoot(document.getElementById('root')!).render(<AppConfig />);
-
-if (import.meta.env.MODE === 'development') {
-  import('./eruda.ts');
-}
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <ConfigProvider>
+    <AdaptivityProvider>
+      <App />
+    </AdaptivityProvider>
+  </ConfigProvider>
+);
