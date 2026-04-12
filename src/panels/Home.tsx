@@ -94,8 +94,8 @@ export const Home = ({ id }: { id: string }) => {
       <Group>
         <Div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text weight="2">Мой вклад:</Text>
-          <Counter mode="secondary" size="m">
-            {totalPoints} баллов
+            <Counter size="m">
+              {totalPoints} баллов
           </Counter>
         </Div>
       </Group>
