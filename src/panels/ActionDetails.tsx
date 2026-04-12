@@ -1,5 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Panel, PanelHeader, PanelHeaderBack, Group, Div, Button, Title, Text, Header } from '@vkontakte/vkui';
+import {
+  Panel,
+  PanelHeader,
+  PanelHeaderBack,
+  Group,
+  Div,
+  Button,
+  Title,
+  Text,
+  Header,
+} from '@vkontakte/vkui';
 import QRCode from 'react-qr-code';
 import api from '../api/client';
 
@@ -13,9 +23,14 @@ interface EcoAction {
   points_per_participant: number;
 }
 
+interface Participation {
+  ticket_code: string;
+  points_earned: number;
+}
+
 export const ActionDetails = ({ id, actionId }: { id: string; actionId: string | null }) => {
   const [action, setAction] = useState<EcoAction | null>(null);
-  const [participation, setParticipation] = useState<{ ticket_code: string; points_earned: number } | null>(null);
+  const [participation, setParticipation] = useState<Participation | null>(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
 
@@ -35,7 +50,10 @@ export const ActionDetails = ({ id, actionId }: { id: string; actionId: string |
     setRegistering(true);
     try {
       const res = await api.post(`/actions/${actionId}/participate`);
-      setParticipation({ ticket_code: res.data.ticketCode, points_earned: res.data.points });
+      setParticipation({
+        ticket_code: res.data.ticketCode,
+        points_earned: res.data.points,
+      });
     } catch (err: any) {
       alert(err.response?.data?.error || 'Не удалось записаться');
     } finally {
@@ -43,14 +61,37 @@ export const ActionDetails = ({ id, actionId }: { id: string; actionId: string |
     }
   };
 
-  const handleBack = () => { window.location.hash = '#/'; };
+  const handleBack = () => {
+    window.location.hash = '#/';
+  };
 
-  if (loading) return <Panel id={id}><PanelHeader before={<PanelHeaderBack onClick={handleBack} />}>Загрузка...</PanelHeader><Div>Загрузка...</Div></Panel>;
-  if (!action) return <Panel id={id}><PanelHeader before={<PanelHeaderBack onClick={handleBack} />}>Ошибка</PanelHeader><Div>Акция не найдена</Div></Panel>;
+  if (loading) {
+    return (
+      <Panel id={id}>
+        <PanelHeader before={<PanelHeaderBack onClick={handleBack} />}>
+          Загрузка...
+        </PanelHeader>
+        <Div>Загрузка...</Div>
+      </Panel>
+    );
+  }
+
+  if (!action) {
+    return (
+      <Panel id={id}>
+        <PanelHeader before={<PanelHeaderBack onClick={handleBack} />}>
+          Ошибка
+        </PanelHeader>
+        <Div>Акция не найдена</Div>
+      </Panel>
+    );
+  }
 
   return (
     <Panel id={id}>
-      <PanelHeader before={<PanelHeaderBack onClick={handleBack} />}>{action.title}</PanelHeader>
+      <PanelHeader before={<PanelHeaderBack onClick={handleBack} />}>
+        {action.title}
+      </PanelHeader>
       <Group>
         <Div>
           <Title level="1" weight="1">{action.title}</Title>
@@ -63,12 +104,28 @@ export const ActionDetails = ({ id, actionId }: { id: string; actionId: string |
         {action.description && <Div><Text>{action.description}</Text></Div>}
       </Group>
 
-      <Group header={<Header>Ваш вклад</Header>}>
+      <Group header={<Header>Ваш билет</Header>}>
         {participation ? (
           <Div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <QRCode value={participation.ticket_code} size={200} />
             <Text style={{ marginTop: 12 }}>Покажите этот код организатору</Text>
-            <Text weight="2">Вы получите {participation.points_earned} эко-баллов</Text>
+            <Text weight="2" style={{ marginTop: 4 }}>
+              Вы получите {participation.points_earned} эко-баллов
+            </Text>
+            {/* 👇 Явное отображение кода билета для ручного ввода */}
+            <Text
+              style={{
+                marginTop: 16,
+                padding: '8px 12px',
+                backgroundColor: '#f0f0f0',
+                borderRadius: 8,
+                wordBreak: 'break-all',
+                fontFamily: 'monospace',
+                fontSize: 14,
+              }}
+            >
+              Код: {participation.ticket_code}
+            </Text>
           </Div>
         ) : (
           <Div>
