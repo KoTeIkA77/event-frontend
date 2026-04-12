@@ -39,33 +39,7 @@ export const Home = ({ id }: { id: string }) => {
       .catch(() => setIsOrganizer(false));
   }, []);
 
-  const handleScanTicket = async () => {
-    try {
-      console.log('[ЭкоДесант] Запуск сканера QR...');
-      // Пытаемся открыть сканер VK Bridge
-      const data = await bridge.send('VKWebAppOpenCodeReader');
-      console.log('[ЭкоДесант] Результат сканера:', data);
-
-      if (data && data.code_data) {
-        await verifyTicket(data.code_data);
-      } else {
-        // Если сканер не вернул данные, предлагаем ручной ввод
-        fallbackManualInput();
-      }
-    } catch (err: any) {
-      console.error('[ЭкоДесант] Ошибка сканера:', err);
-      // Если сканер недоступен (например, на десктопе), переходим к ручному вводу
-      fallbackManualInput();
-    }
-  };
-
-  const fallbackManualInput = () => {
-    const code = prompt('Введите код билета вручную:');
-    if (code) {
-      verifyTicket(code);
-    }
-  };
-
+  // Функция проверки билета (отправка на бэкенд)
   const verifyTicket = async (ticketCode: string) => {
     try {
       const res = await api.post('/actions/verify-ticket', { ticketCode });
@@ -73,6 +47,36 @@ export const Home = ({ id }: { id: string }) => {
     } catch (err: any) {
       console.error('[ЭкоДесант] Ошибка проверки билета:', err);
       alert(err?.response?.data?.error || 'Не удалось подтвердить билет');
+    }
+  };
+
+  // Ручной ввод кода (fallback)
+  const manualInputCode = () => {
+    const code = prompt('📋 Введите код билета вручную:');
+    if (code && code.trim()) {
+      verifyTicket(code.trim());
+    }
+  };
+
+  // Обработчик нажатия на кнопку сканирования
+  const handleScanTicket = async () => {
+    try {
+      console.log('[ЭкоДесант] Запуск сканера VK Bridge...');
+      const data = await bridge.send('VKWebAppOpenCodeReader');
+      console.log('[ЭкоДесант] Результат сканера:', data);
+
+      if (data && data.code_data) {
+        // Успешно получили код – проверяем билет
+        await verifyTicket(data.code_data);
+      } else {
+        // Сканер не вернул код – переходим к ручному вводу
+        console.warn('[ЭкоДесант] Сканер не вернул код, запрашиваем вручную');
+        manualInputCode();
+      }
+    } catch (err: any) {
+      // Любая ошибка (включая client_error) – сразу ручной ввод
+      console.warn('[ЭкоДесант] Ошибка сканера, переходим к ручному вводу:', err);
+      manualInputCode();
     }
   };
 
