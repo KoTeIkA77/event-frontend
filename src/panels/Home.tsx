@@ -9,7 +9,7 @@ import {
   Header,
   Counter,
 } from '@vkontakte/vkui';
-import bridge from '@vkontakte/vk-bridge'; // или MAX bridge
+import bridge from '@vkontakte/vk-bridge';
 import api from '../api/client';
 
 interface EcoAction {
@@ -29,13 +29,11 @@ export const Home = ({ id }: { id: string }) => {
   const [isOrganizer, setIsOrganizer] = useState(false);
 
   useEffect(() => {
-    // Загружаем список акций
     api.get('/actions')
       .then(res => setActions(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
 
-    // Проверяем роль пользователя (организатор или нет)
     api.get('/actions/my-role')
       .then(res => setIsOrganizer(res.data.role === 'organizer'))
       .catch(() => setIsOrganizer(false));
@@ -43,15 +41,38 @@ export const Home = ({ id }: { id: string }) => {
 
   const handleScanTicket = async () => {
     try {
+      console.log('[ЭкоДесант] Запуск сканера QR...');
+      // Пытаемся открыть сканер VK Bridge
       const data = await bridge.send('VKWebAppOpenCodeReader');
-      if (data.code_data) {
-        const res = await api.post('/actions/verify-ticket', {
-          ticketCode: data.code_data,
-        });
-        alert(`✅ Участник подтверждён! Начислено ${res.data.points} эко-баллов.`);
+      console.log('[ЭкоДесант] Результат сканера:', data);
+
+      if (data && data.code_data) {
+        await verifyTicket(data.code_data);
+      } else {
+        // Если сканер не вернул данные, предлагаем ручной ввод
+        fallbackManualInput();
       }
-    } catch (err) {
-      console.error('Сканирование отменено или ошибка:', err);
+    } catch (err: any) {
+      console.error('[ЭкоДесант] Ошибка сканера:', err);
+      // Если сканер недоступен (например, на десктопе), переходим к ручному вводу
+      fallbackManualInput();
+    }
+  };
+
+  const fallbackManualInput = () => {
+    const code = prompt('Введите код билета вручную:');
+    if (code) {
+      verifyTicket(code);
+    }
+  };
+
+  const verifyTicket = async (ticketCode: string) => {
+    try {
+      const res = await api.post('/actions/verify-ticket', { ticketCode });
+      alert(`✅ Участник подтверждён! Начислено ${res.data.points} эко-баллов.`);
+    } catch (err: any) {
+      console.error('[ЭкоДесант] Ошибка проверки билета:', err);
+      alert(err?.response?.data?.error || 'Не удалось подтвердить билет');
     }
   };
 
