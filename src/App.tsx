@@ -1,28 +1,27 @@
 import { useState, useEffect } from 'react';
 import { AppRoot, SplitLayout, SplitCol, View } from '@vkontakte/vkui';
 import { Home } from './panels/Home';
-import { CreateEvent } from './panels/CreateEvent';
-import { EventDetails } from './panels/EventDetails';
+import { CreateAction } from './panels/CreateAction';
+import { ActionDetails } from './panels/ActionDetails';
 import '@vkontakte/vkui/dist/vkui.css';
 
 const App = () => {
   const [activePanel, setActivePanel] = useState('home');
-  const [eventId, setEventId] = useState<string | null>(null);
+  const [actionId, setActionId] = useState<string | null>(null);
 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      if (hash.startsWith('/event/')) {
+      if (hash.startsWith('/action/')) {
         const id = hash.split('/')[2];
-        setEventId(id);
-        setActivePanel('event-details');
-      } else if (hash === '/create-event') {
-        setActivePanel('create-event');
+        setActionId(id);
+        setActivePanel('action-details');
+      } else if (hash === '/create-action') {
+        setActivePanel('create-action');
       } else {
         setActivePanel('home');
       }
     };
-
     window.addEventListener('hashchange', handleHashChange);
     handleHashChange();
     return () => window.removeEventListener('hashchange', handleHashChange);
@@ -34,8 +33,8 @@ const App = () => {
         <SplitCol>
           <View id="main" activePanel={activePanel}>
             <Home id="home" />
-            <CreateEvent id="create-event" />
-            <EventDetails id="event-details" eventId={eventId} />
+            <CreateAction id="create-action" />
+            <ActionDetails id="action-details" actionId={actionId} />
           </View>
         </SplitCol>
       </SplitLayout>

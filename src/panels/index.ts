@@ -1,3 +1,3 @@
 export { Home } from './Home';
-export { CreateEvent } from './CreateEvent';
-export { EventDetails } from './EventDetails';
+export { CreateAction } from './CreateAction';
+export { ActionDetails } from './ActionDetails';

@@ -1,66 +1,56 @@
 import { useState, useEffect } from 'react';
-import {
-  Panel,
-  PanelHeader,
-  Group,
-  SimpleCell,
-  Div,
-  Button,
-  Header,
-} from '@vkontakte/vkui';
+import { Panel, PanelHeader, Group, SimpleCell, Div, Button, Header, Counter } from '@vkontakte/vkui';
 import api from '../api/client';
 
-interface Event {
+interface EcoAction {
   id: number;
   title: string;
   description: string;
   date: string;
   location: string;
   max_participants: number | null;
+  points_per_participant: number;
+  participants_count: number;
 }
 
 export const Home = ({ id }: { id: string }) => {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [actions, setActions] = useState<EcoAction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/events')
-      .then(res => setEvents(res.data))
+    api.get('/actions')
+      .then(res => setActions(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  const goToCreateEvent = () => {
-    console.log('Кнопка нажата, переходим на /create-event');
-    window.location.hash = '#/create-event';
-  };
-
-  const goToEventDetails = (eventId: number) => {
-    window.location.hash = `#/event/${eventId}`;
-  };
-
   return (
     <Panel id={id}>
-      <PanelHeader>Мероприятия MAX</PanelHeader>
-      <Group header={<Header>Ближайшие события</Header>}>
+      <PanelHeader>ЭкоДесант 🌿</PanelHeader>
+      <Group header={<Header>Ближайшие акции</Header>}>
         {loading && <Div>Загрузка...</Div>}
-        {!loading && events.length === 0 && (
-          <Div>Пока нет мероприятий. Создайте первое!</Div>
+        {!loading && actions.length === 0 && (
+          <Div>Пока нет акций. Создайте первую!</Div>
         )}
-        {events.map(event => (
+        {actions.map(action => (
           <SimpleCell
-            key={event.id}
-            subtitle={`${new Date(event.date).toLocaleString()} · ${event.location || 'Онлайн'}`}
-            onClick={() => goToEventDetails(event.id)}
+            key={action.id}
+            subtitle={`${new Date(action.date).toLocaleString()} · ${action.location || 'Онлайн'}`}
+            onClick={() => { window.location.hash = `#/action/${action.id}`; }}
             chevron="auto"
+            after={
+              <Counter mode="primary" size="s">
+                {action.participants_count || 0}
+              </Counter>
+            }
           >
-            {event.title}
+            {action.title}
           </SimpleCell>
         ))}
       </Group>
       <Div>
-        <Button size="l" stretched onClick={goToCreateEvent}>
-          + Создать мероприятие
+        <Button size="l" stretched onClick={() => { window.location.hash = '#/create-action'; }}>
+          + Создать акцию
         </Button>
       </Div>
     </Panel>
