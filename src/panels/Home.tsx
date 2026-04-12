@@ -8,6 +8,7 @@ import {
   Button,
   Header,
   Counter,
+  Text,
 } from '@vkontakte/vkui';
 import bridge from '@vkontakte/vk-bridge';
 import api from '../api/client';
@@ -27,19 +28,27 @@ export const Home = ({ id }: { id: string }) => {
   const [actions, setActions] = useState<EcoAction[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOrganizer, setIsOrganizer] = useState(false);
+  const [totalPoints, setTotalPoints] = useState(0);
 
   useEffect(() => {
+    // Загрузка списка акций
     api.get('/actions')
       .then(res => setActions(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
 
+    // Проверка роли организатора
     api.get('/actions/my-role')
       .then(res => setIsOrganizer(res.data.role === 'organizer'))
       .catch(() => setIsOrganizer(false));
+
+    // Получение баланса баллов текущего пользователя
+    api.get('/actions/my-stats')
+      .then(res => setTotalPoints(res.data.total_points))
+      .catch(console.error);
   }, []);
 
-  // Функция проверки билета (отправка на бэкенд)
+  // Функция проверки билета на бэкенде
   const verifyTicket = async (ticketCode: string) => {
     try {
       const res = await api.post('/actions/verify-ticket', { ticketCode });
@@ -50,7 +59,7 @@ export const Home = ({ id }: { id: string }) => {
     }
   };
 
-  // Ручной ввод кода (fallback)
+  // Ручной ввод кода билета
   const manualInputCode = () => {
     const code = prompt('📋 Введите код билета вручную:');
     if (code && code.trim()) {
@@ -66,15 +75,12 @@ export const Home = ({ id }: { id: string }) => {
       console.log('[ЭкоДесант] Результат сканера:', data);
 
       if (data && data.code_data) {
-        // Успешно получили код – проверяем билет
         await verifyTicket(data.code_data);
       } else {
-        // Сканер не вернул код – переходим к ручному вводу
         console.warn('[ЭкоДесант] Сканер не вернул код, запрашиваем вручную');
         manualInputCode();
       }
     } catch (err: any) {
-      // Любая ошибка (включая client_error) – сразу ручной ввод
       console.warn('[ЭкоДесант] Ошибка сканера, переходим к ручному вводу:', err);
       manualInputCode();
     }
@@ -83,6 +89,17 @@ export const Home = ({ id }: { id: string }) => {
   return (
     <Panel id={id}>
       <PanelHeader>ЭкоДесант 🌿</PanelHeader>
+
+      {/* Блок с личным балансом волонтёра */}
+      <Group>
+        <Div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text weight="2">Мой вклад:</Text>
+          <Counter mode="secondary" size="m">
+            {totalPoints} баллов
+          </Counter>
+        </Div>
+      </Group>
+
       <Group header={<Header>Ближайшие акции</Header>}>
         {loading && <Div>Загрузка...</Div>}
         {!loading && actions.length === 0 && (
@@ -104,6 +121,7 @@ export const Home = ({ id }: { id: string }) => {
           </SimpleCell>
         ))}
       </Group>
+
       <Div>
         <Button
           size="l"
@@ -113,6 +131,7 @@ export const Home = ({ id }: { id: string }) => {
           + Создать акцию
         </Button>
       </Div>
+
       {isOrganizer && (
         <Div>
           <Button
