@@ -30,6 +30,16 @@ export const Home = ({ id }: { id: string }) => {
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [totalPoints, setTotalPoints] = useState(0);
 
+  // Функция для получения актуального баланса с сервера
+  const fetchMyStats = async () => {
+    try {
+      const res = await api.get('/actions/my-stats');
+      setTotalPoints(res.data.total_points);
+    } catch (err) {
+      console.error('Ошибка получения баланса:', err);
+    }
+  };
+
   useEffect(() => {
     // Загрузка списка акций
     api.get('/actions')
@@ -42,24 +52,27 @@ export const Home = ({ id }: { id: string }) => {
       .then(res => setIsOrganizer(res.data.role === 'organizer'))
       .catch(() => setIsOrganizer(false));
 
-    // Получение баланса баллов текущего пользователя
-    api.get('/actions/my-stats')
-      .then(res => setTotalPoints(res.data.total_points))
-      .catch(console.error);
+    // Получение начального баланса
+    fetchMyStats();
   }, []);
 
-  // Функция проверки билета на бэкенде
+  // Функция проверки билета (отправка кода на бэкенд)
   const verifyTicket = async (ticketCode: string) => {
     try {
       const res = await api.post('/actions/verify-ticket', { ticketCode });
       alert(`✅ Участник подтверждён! Начислено ${res.data.points} эко-баллов.`);
+      // Обновляем баланс (на случай, если организатор тоже волонтёр)
+      fetchMyStats();
+      // Также можно обновить список акций, чтобы изменилось число участников
+      const actionsRes = await api.get('/actions');
+      setActions(actionsRes.data);
     } catch (err: any) {
       console.error('[ЭкоДесант] Ошибка проверки билета:', err);
       alert(err?.response?.data?.error || 'Не удалось подтвердить билет');
     }
   };
 
-  // Ручной ввод кода билета
+  // Ручной ввод кода (fallback)
   const manualInputCode = () => {
     const code = prompt('📋 Введите код билета вручную:');
     if (code && code.trim()) {
@@ -67,7 +80,7 @@ export const Home = ({ id }: { id: string }) => {
     }
   };
 
-  // Обработчик нажатия на кнопку сканирования
+  // Обработчик нажатия кнопки сканирования
   const handleScanTicket = async () => {
     try {
       console.log('[ЭкоДесант] Запуск сканера VK Bridge...');
@@ -90,12 +103,12 @@ export const Home = ({ id }: { id: string }) => {
     <Panel id={id}>
       <PanelHeader>ЭкоДесант 🌿</PanelHeader>
 
-      {/* Блок с личным балансом волонтёра */}
+      {/* Блок с личным балансом */}
       <Group>
         <Div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text weight="2">Мой вклад:</Text>
-            <Counter size="m">
-              {totalPoints} баллов
+          <Counter size="m">
+            {totalPoints} баллов
           </Counter>
         </Div>
       </Group>
