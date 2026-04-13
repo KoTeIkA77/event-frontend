@@ -21,6 +21,7 @@ interface EcoAction {
   location: string;
   max_participants: number | null;
   points_per_participant: number;
+  organizer_vk_id?: number;
 }
 
 interface Participation {
@@ -33,16 +34,25 @@ export const ActionDetails = ({ id, actionId }: { id: string; actionId: string |
   const [participation, setParticipation] = useState<Participation | null>(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!actionId) return;
+
     Promise.all([
       api.get('/actions').then(res => res.data.find((a: EcoAction) => a.id === Number(actionId))),
-      api.get(`/actions/${actionId}/my-ticket`).then(res => res.data)
+      api.get(`/actions/${actionId}/my-ticket`).then(res => res.data),
     ]).then(([act, part]) => {
       setAction(act || null);
       setParticipation(part);
     }).catch(console.error).finally(() => setLoading(false));
+
+    import('@vkontakte/vk-bridge').then(bridge => {
+      bridge.default.send('VKWebAppGetUserInfo').then(user => {
+        setCurrentUserId(user.id);
+      });
+    });
   }, [actionId]);
 
   const handleParticipate = async () => {
@@ -61,6 +71,20 @@ export const ActionDetails = ({ id, actionId }: { id: string; actionId: string |
     }
   };
 
+  const handleDelete = async () => {
+    if (!actionId || !confirm('Вы уверены, что хотите удалить акцию? Все записи участников будут потеряны.')) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/actions/${actionId}`);
+      alert('Акция удалена');
+      window.location.hash = '#/';
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Ошибка удаления');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleBack = () => {
     window.location.hash = '#/';
   };
@@ -68,9 +92,7 @@ export const ActionDetails = ({ id, actionId }: { id: string; actionId: string |
   if (loading) {
     return (
       <Panel id={id}>
-        <PanelHeader before={<PanelHeaderBack onClick={handleBack} />}>
-          Загрузка...
-        </PanelHeader>
+        <PanelHeader before={<PanelHeaderBack onClick={handleBack} />}>Загрузка...</PanelHeader>
         <Div>Загрузка...</Div>
       </Panel>
     );
@@ -79,13 +101,13 @@ export const ActionDetails = ({ id, actionId }: { id: string; actionId: string |
   if (!action) {
     return (
       <Panel id={id}>
-        <PanelHeader before={<PanelHeaderBack onClick={handleBack} />}>
-          Ошибка
-        </PanelHeader>
+        <PanelHeader before={<PanelHeaderBack onClick={handleBack} />}>Ошибка</PanelHeader>
         <Div>Акция не найдена</Div>
       </Panel>
     );
   }
+
+  const isOrganizerOfThisAction = currentUserId === action.organizer_vk_id;
 
   return (
     <Panel id={id}>
@@ -112,7 +134,6 @@ export const ActionDetails = ({ id, actionId }: { id: string; actionId: string |
             <Text weight="2" style={{ marginTop: 4 }}>
               Вы получите {participation.points_earned} эко-баллов
             </Text>
-            {/* 👇 Явное отображение кода билета для ручного ввода */}
             <Text
               style={{
                 marginTop: 16,
@@ -135,6 +156,22 @@ export const ActionDetails = ({ id, actionId }: { id: string; actionId: string |
           </Div>
         )}
       </Group>
+
+      {isOrganizerOfThisAction && (
+        <Group>
+          <Div>
+            <Button
+              size="l"
+              stretched
+              appearance="negative"
+              onClick={handleDelete}
+              loading={deleting}
+            >
+              🗑️ Удалить акцию
+            </Button>
+          </Div>
+        </Group>
+      )}
     </Panel>
   );
 };
