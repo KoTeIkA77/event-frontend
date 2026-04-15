@@ -11,7 +11,7 @@ import {
   Header,
   SimpleCell,
   Text,
-  Select,
+  CustomSelect,
 } from '@vkontakte/vkui';
 import api from '../api/client';
 
@@ -130,17 +130,16 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
     }
   };
 
-  // Формируем опции для Select
   const participantOptions = participants.map(p => ({
-    label: p.name || `ID ${p.vk_id}`,
     value: p.participation_id,
+    label: p.name || `ID ${p.vk_id}`,
   }));
 
   const inventoryOptions = inventory
-    .filter(i => i.available_quantity > 0)
-    .map(i => ({
-      label: `${i.name} (доступно ${i.available_quantity})`,
-      value: i.id,
+    .filter(item => item.available_quantity > 0)
+    .map(item => ({
+      value: item.id,
+      label: `${item.name} (доступно ${item.available_quantity})`,
     }));
 
   return (
@@ -160,19 +159,19 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
       <Group header={<Header>Выдать инвентарь участнику</Header>}>
         <form onSubmit={handleIssue}>
           <FormItem top="Участник">
-            <Select
-              value={selectedParticipantId ?? undefined}
-              onChange={(e) => setSelectedParticipantId(Number(e.target.value))}
+            <CustomSelect
               placeholder="Выберите участника"
               options={participantOptions}
+              value={selectedParticipantId}
+              onChange={(e) => setSelectedParticipantId(Number(e.target.value))}
             />
           </FormItem>
           <FormItem top="Инвентарь">
-            <Select
-              value={selectedInventoryId ?? undefined}
-              onChange={(e) => setSelectedInventoryId(Number(e.target.value))}
+            <CustomSelect
               placeholder="Выберите инвентарь"
               options={inventoryOptions}
+              value={selectedInventoryId}
+              onChange={(e) => setSelectedInventoryId(Number(e.target.value))}
             />
           </FormItem>
           <FormItem top="Количество">
