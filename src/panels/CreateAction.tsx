@@ -9,8 +9,10 @@ import {
   Textarea,
   Button,
   Div,
+  ModalRoot,
 } from '@vkontakte/vkui';
 import api from '../api/client';
+import { MapPicker } from '../components/MapPicker';
 
 export const CreateAction = ({ id }: { id: string }) => {
   const [title, setTitle] = useState('');
@@ -20,10 +22,11 @@ export const CreateAction = ({ id }: { id: string }) => {
   const [maxParticipants, setMaxParticipants] = useState('');
   const [points, setPoints] = useState('10');
   const [loading, setLoading] = useState(false);
+  const [activeModal, setActiveModal] = useState<string | null>(null);
 
-  // Открыть Яндекс.Карты для выбора места
-  const openYandexMaps = () => {
-    window.open('https://yandex.ru/maps/?ll=37.618423%2C55.751244&z=12', '_blank');
+  const handleSelectLocation = (address: string) => {
+    setLocation(address);
+    setActiveModal(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,25 +69,16 @@ export const CreateAction = ({ id }: { id: string }) => {
             <Input
               value={location}
               onChange={e => setLocation(e.target.value)}
-              placeholder="Введите адрес или координаты"
+              placeholder="Адрес или координаты"
             />
           </FormItem>
-          <Div style={{ display: 'flex', gap: 8 }}>
+          <Div>
             <Button
               size="l"
               mode="secondary"
-              onClick={openYandexMaps}
+              onClick={() => setActiveModal('map-picker')}
             >
-              🗺️ Открыть карту
-            </Button>
-            <Button
-              size="l"
-              mode="secondary"
-              onClick={() => {
-                navigator.clipboard?.writeText(location).then(() => alert('Адрес скопирован'));
-              }}
-            >
-              📋 Копировать
+              🗺️ Выбрать на карте
             </Button>
           </Div>
           <FormItem top="Макс. участников">
@@ -105,6 +99,14 @@ export const CreateAction = ({ id }: { id: string }) => {
           </Div>
         </form>
       </Group>
+
+      <ModalRoot activeModal={activeModal} onClose={() => setActiveModal(null)}>
+        <MapPicker
+          id="map-picker"
+          onClose={() => setActiveModal(null)}
+          onSelect={handleSelectLocation}
+        />
+      </ModalRoot>
     </Panel>
   );
 };
