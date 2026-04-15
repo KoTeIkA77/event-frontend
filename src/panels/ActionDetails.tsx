@@ -89,6 +89,10 @@ export const ActionDetails = ({ id, actionId }: { id: string; actionId: string |
     window.location.hash = '#/';
   };
 
+  const goToInventory = () => {
+    window.location.hash = `#/inventory/${actionId}`;
+  };
+
   if (loading) {
     return (
       <Panel id={id}>
@@ -158,19 +162,33 @@ export const ActionDetails = ({ id, actionId }: { id: string; actionId: string |
       </Group>
 
       {isOrganizerOfThisAction && (
-        <Group>
-          <Div>
-            <Button
-              size="l"
-              stretched
-              appearance="negative"
-              onClick={handleDelete}
-              loading={deleting}
-            >
-              🗑️ Удалить акцию
-            </Button>
-          </Div>
-        </Group>
+        <>
+          <Group>
+            <Div>
+              <Button
+                size="l"
+                stretched
+                mode="secondary"
+                onClick={goToInventory}
+              >
+                📦 Управление инвентарём
+              </Button>
+            </Div>
+          </Group>
+          <Group>
+            <Div>
+              <Button
+                size="l"
+                stretched
+                appearance="negative"
+                onClick={handleDelete}
+                loading={deleting}
+              >
+                🗑️ Удалить акцию
+              </Button>
+            </Div>
+          </Group>
+        </>
       )}
     </Panel>
   );
