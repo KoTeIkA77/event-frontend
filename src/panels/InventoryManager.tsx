@@ -53,7 +53,7 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
       const res = await api.get(`/actions/${actionId}/inventory`);
       setInventory(res.data);
     } catch (err) {
-      console.error(err);
+      console.error('Ошибка загрузки инвентаря:', err);
     } finally {
       setLoading(false);
     }
@@ -63,8 +63,9 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
     try {
       const res = await api.get(`/actions/${actionId}/participants`);
       setParticipants(res.data);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error('Ошибка загрузки участников:', err);
+      alert('Не удалось загрузить участников. Проверьте права организатора.');
     }
   };
 
