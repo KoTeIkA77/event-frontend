@@ -11,7 +11,7 @@ import {
   Header,
   SimpleCell,
   Text,
-  Select,
+  Checkbox,
 } from '@vkontakte/vkui';
 import api from '../api/client';
 
@@ -40,6 +40,12 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
   const [selectedParticipantId, setSelectedParticipantId] = useState<number | null>(null);
   const [selectedInventoryId, setSelectedInventoryId] = useState<number | null>(null);
   const [issueQuantity, setIssueQuantity] = useState('1');
+
+  // Настройки отчёта
+  const [reportFormat, setReportFormat] = useState<'csv' | 'json'>('csv');
+  const [attendedOnly, setAttendedOnly] = useState(false);
+  const [includeInventory, setIncludeInventory] = useState(true);
+  const [sortBy, setSortBy] = useState<'name' | 'points' | 'registration'>('name');
 
   const fetchInventory = async () => {
     setLoading(true);
@@ -117,31 +123,37 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
 
   const handleDownloadReport = async () => {
     try {
-      const res = await api.get(`/actions/${actionId}/report`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `action_${actionId}_report.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const params = new URLSearchParams({
+        format: reportFormat,
+        attended_only: String(attendedOnly),
+        include_inventory: String(includeInventory),
+        sort: sortBy,
+      });
+      const res = await api.get(`/actions/${actionId}/report?${params}`, {
+        responseType: reportFormat === 'csv' ? 'blob' : 'json',
+      });
+      if (reportFormat === 'csv') {
+        const url = window.URL.createObjectURL(new Blob([res.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `action_${actionId}_report.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } else {
+        const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `action_${actionId}_report.json`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
     } catch (err: any) {
       alert('Ошибка скачивания отчёта');
     }
   };
-
-  // Преобразуем списки в options для Select
-  const participantOptions = participants.map(p => ({
-    value: p.participation_id,
-    label: p.name || `ID ${p.vk_id}`,
-  }));
-
-  const inventoryOptions = inventory
-    .filter(i => i.available_quantity > 0)
-    .map(i => ({
-      value: i.id,
-      label: `${i.name} (доступно ${i.available_quantity})`,
-    }));
 
   return (
     <Panel id={id}>
@@ -149,10 +161,39 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
         Инвентарь акции
       </PanelHeader>
 
-      <Group header={<Header>Скачать отчёт</Header>}>
+      <Group header={<Header>Настройки отчёта</Header>}>
+        <FormItem top="Формат">
+          <select
+            value={reportFormat}
+            onChange={e => setReportFormat(e.target.value as 'csv' | 'json')}
+            style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--vkui--color_field_border_alpha)' }}
+          >
+            <option value="csv">CSV</option>
+            <option value="json">JSON</option>
+          </select>
+        </FormItem>
+        <FormItem top="Сортировка">
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as 'name' | 'points' | 'registration')}
+            style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--vkui--color_field_border_alpha)' }}
+          >
+            <option value="name">По имени</option>
+            <option value="points">По баллам (убыв.)</option>
+            <option value="registration">По дате регистрации</option>
+          </select>
+        </FormItem>
+        <FormItem>
+          <Checkbox checked={attendedOnly} onChange={e => setAttendedOnly(e.target.checked)}>
+            Только подтверждённые участники
+          </Checkbox>
+          <Checkbox checked={includeInventory} onChange={e => setIncludeInventory(e.target.checked)}>
+            Включить выданный инвентарь
+          </Checkbox>
+        </FormItem>
         <Div>
           <Button size="l" stretched onClick={handleDownloadReport}>
-            📊 Скачать CSV-отчёт по участникам
+            📊 Скачать отчёт
           </Button>
         </Div>
       </Group>
@@ -160,20 +201,34 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
       <Group header={<Header>Выдать инвентарь участнику</Header>}>
         <form onSubmit={handleIssue}>
           <FormItem top="Участник">
-            <Select
-              value={selectedParticipantId ?? undefined}
+            <select
+              value={selectedParticipantId ?? ''}
               onChange={(e) => setSelectedParticipantId(Number(e.target.value))}
-              placeholder="Выберите участника"
-              options={participantOptions}
-            />
+              style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--vkui--color_field_border_alpha)' }}
+              required
+            >
+              <option value="" disabled>Выберите участника</option>
+              {participants.map((p) => (
+                <option key={p.participation_id} value={p.participation_id}>
+                  {p.name || `ID ${p.vk_id}`}
+                </option>
+              ))}
+            </select>
           </FormItem>
           <FormItem top="Инвентарь">
-            <Select
-              value={selectedInventoryId ?? undefined}
+            <select
+              value={selectedInventoryId ?? ''}
               onChange={(e) => setSelectedInventoryId(Number(e.target.value))}
-              placeholder="Выберите инвентарь"
-              options={inventoryOptions}
-            />
+              style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--vkui--color_field_border_alpha)' }}
+              required
+            >
+              <option value="" disabled>Выберите инвентарь</option>
+              {inventory.filter(i => i.available_quantity > 0).map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name} (доступно {item.available_quantity})
+                </option>
+              ))}
+            </select>
           </FormItem>
           <FormItem top="Количество">
             <Input
