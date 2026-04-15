@@ -17,18 +17,20 @@ const App = () => {
         const id = hash.split('/')[2];
         setActionId(id);
         setActivePanel('action-details');
-      } else if (hash === '/create-action') {
-        setActivePanel('create-action');
       } else if (hash.startsWith('/inventory/')) {
         const id = hash.split('/')[2];
         setActionId(id);
-        setActivePanel('inventory-manager');
+        setActivePanel('inventory');
+      } else if (hash === '/create-action') {
+        setActivePanel('create-action');
       } else {
         setActivePanel('home');
       }
     };
+
     window.addEventListener('hashchange', handleHashChange);
     handleHashChange();
+
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
@@ -41,9 +43,11 @@ const App = () => {
             <CreateAction id="create-action" />
             <ActionDetails id="action-details" actionId={actionId} />
             <InventoryManager
-              id="inventory-manager"
-              actionId={actionId || ''}
-              onBack={() => { window.location.hash = `#/action/${actionId}`; }}
+              id="inventory"
+              actionId={actionId!}
+              onBack={() => {
+                window.location.hash = `#/action/${actionId}`;
+              }}
             />
           </View>
         </SplitCol>
