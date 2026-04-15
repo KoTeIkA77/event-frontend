@@ -41,7 +41,6 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
   const [selectedInventoryId, setSelectedInventoryId] = useState<number | null>(null);
   const [issueQuantity, setIssueQuantity] = useState('1');
 
-  // Настройки отчёта
   const [reportFormat, setReportFormat] = useState<'csv' | 'json'>('csv');
   const [attendedOnly, setAttendedOnly] = useState(false);
   const [includeInventory, setIncludeInventory] = useState(true);
@@ -53,7 +52,7 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
       const res = await api.get(`/actions/${actionId}/inventory`);
       setInventory(res.data);
     } catch (err) {
-      console.error('Ошибка загрузки инвентаря:', err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -64,9 +63,8 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
       const res = await api.get(`/actions/${actionId}/participants`);
       setParticipants(res.data);
     } catch (err: any) {
-      console.error('Ошибка загрузки участников:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'Не удалось загрузить участников';
-      alert(`Ошибка: ${errorMessage}`);
+      console.error(err);
+      alert('Не удалось загрузить участников. Проверьте права организатора.');
     }
   };
 
@@ -152,99 +150,83 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
         link.click();
         link.remove();
       }
-    } catch (err: any) {
+    } catch (err) {
       alert('Ошибка скачивания отчёта');
+    }
+  };
+
+  const handleDownloadExcel = async () => {
+    try {
+      const params = new URLSearchParams({
+        attended_only: String(attendedOnly),
+        include_inventory: String(includeInventory),
+      });
+      const res = await api.get(`/actions/${actionId}/report/excel?${params}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `action_${actionId}_report.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      alert('Ошибка скачивания Excel-отчёта');
     }
   };
 
   return (
     <Panel id={id}>
-      <PanelHeader before={<PanelHeaderBack onClick={onBack} />}>
-        Инвентарь акции
-      </PanelHeader>
+      <PanelHeader before={<PanelHeaderBack onClick={onBack} />}>Инвентарь акции</PanelHeader>
 
       <Group header={<Header>Настройки отчёта</Header>}>
         <FormItem top="Формат">
-          <select
-            value={reportFormat}
-            onChange={e => setReportFormat(e.target.value as 'csv' | 'json')}
-            style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--vkui--color_field_border_alpha)' }}
-          >
+          <select value={reportFormat} onChange={e => setReportFormat(e.target.value as any)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--vkui--color_field_border_alpha)' }}>
             <option value="csv">CSV</option>
             <option value="json">JSON</option>
           </select>
         </FormItem>
         <FormItem top="Сортировка">
-          <select
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value as 'name' | 'points' | 'registration')}
-            style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--vkui--color_field_border_alpha)' }}
-          >
+          <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--vkui--color_field_border_alpha)' }}>
             <option value="name">По имени</option>
             <option value="points">По баллам (убыв.)</option>
             <option value="registration">По дате регистрации</option>
           </select>
         </FormItem>
         <FormItem>
-          <Checkbox checked={attendedOnly} onChange={e => setAttendedOnly(e.target.checked)}>
-            Только подтверждённые участники
-          </Checkbox>
-          <Checkbox checked={includeInventory} onChange={e => setIncludeInventory(e.target.checked)}>
-            Включить выданный инвентарь
-          </Checkbox>
+          <Checkbox checked={attendedOnly} onChange={e => setAttendedOnly(e.target.checked)}>Только подтверждённые участники</Checkbox>
+          <Checkbox checked={includeInventory} onChange={e => setIncludeInventory(e.target.checked)}>Включить выданный инвентарь</Checkbox>
         </FormItem>
         <Div>
-          <Button size="l" stretched onClick={handleDownloadReport}>
-            📊 Скачать отчёт
-          </Button>
+          <Button size="l" stretched onClick={handleDownloadReport}>📊 Скачать отчёт (CSV/JSON)</Button>
+        </Div>
+        <Div>
+          <Button size="l" stretched mode="secondary" onClick={handleDownloadExcel}>📥 Скачать Excel-отчёт (красивый)</Button>
         </Div>
       </Group>
 
       <Group header={<Header>Выдать инвентарь участнику</Header>}>
         <form onSubmit={handleIssue}>
           <FormItem top="Участник">
-            <select
-              value={selectedParticipantId ?? ''}
-              onChange={(e) => setSelectedParticipantId(Number(e.target.value))}
-              style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--vkui--color_field_border_alpha)' }}
-              required
-            >
+            <select value={selectedParticipantId ?? ''} onChange={e => setSelectedParticipantId(Number(e.target.value))} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--vkui--color_field_border_alpha)' }} required>
               <option value="" disabled>Выберите участника</option>
-              {participants.map((p) => (
-                <option key={p.participation_id} value={p.participation_id}>
-                  {p.name || `ID ${p.vk_id}`}
-                </option>
+              {participants.map(p => (
+                <option key={p.participation_id} value={p.participation_id}>{p.name || `ID ${p.vk_id}`}</option>
               ))}
             </select>
           </FormItem>
           <FormItem top="Инвентарь">
-            <select
-              value={selectedInventoryId ?? ''}
-              onChange={(e) => setSelectedInventoryId(Number(e.target.value))}
-              style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--vkui--color_field_border_alpha)' }}
-              required
-            >
+            <select value={selectedInventoryId ?? ''} onChange={e => setSelectedInventoryId(Number(e.target.value))} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--vkui--color_field_border_alpha)' }} required>
               <option value="" disabled>Выберите инвентарь</option>
-              {inventory.filter(i => i.available_quantity > 0).map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name} (доступно {item.available_quantity})
-                </option>
+              {inventory.filter(i => i.available_quantity > 0).map(item => (
+                <option key={item.id} value={item.id}>{item.name} (доступно {item.available_quantity})</option>
               ))}
             </select>
           </FormItem>
           <FormItem top="Количество">
-            <Input
-              type="number"
-              value={issueQuantity}
-              onChange={(e) => setIssueQuantity(e.target.value)}
-              min="1"
-              required
-            />
+            <Input type="number" value={issueQuantity} onChange={e => setIssueQuantity(e.target.value)} min="1" required />
           </FormItem>
           <Div>
-            <Button size="l" stretched type="submit" loading={issuing}>
-              Выдать инвентарь
-            </Button>
+            <Button size="l" stretched type="submit" loading={issuing}>Выдать инвентарь</Button>
           </Div>
         </form>
       </Group>
