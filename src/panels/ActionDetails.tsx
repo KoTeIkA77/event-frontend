@@ -12,6 +12,7 @@ import {
 } from '@vkontakte/vkui';
 import QRCode from 'react-qr-code';
 import api from '../api/client';
+import bridge from '@vkontakte/vk-bridge';
 
 interface EcoAction {
   id: number;
@@ -47,11 +48,8 @@ export const ActionDetails = ({ id, actionId }: { id: string; actionId: string |
       setAction(act || null);
       setParticipation(part);
     }).catch(console.error).finally(() => setLoading(false));
-
-    import('@vkontakte/vk-bridge').then(bridge => {
-      bridge.default.send('VKWebAppGetUserInfo').then(user => {
-        setCurrentUserId(user.id);
-      });
+    bridge.send('VKWebAppGetUserInfo').then(user => {
+      setCurrentUserId(user.id);
     });
   }, [actionId]);
 
