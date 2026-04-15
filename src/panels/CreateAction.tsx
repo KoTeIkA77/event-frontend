@@ -10,7 +10,6 @@ import {
   Button,
   Div,
 } from '@vkontakte/vkui';
-import bridge from '@vkontakte/vk-bridge';
 import api from '../api/client';
 
 export const CreateAction = ({ id }: { id: string }) => {
@@ -21,25 +20,10 @@ export const CreateAction = ({ id }: { id: string }) => {
   const [maxParticipants, setMaxParticipants] = useState('');
   const [points, setPoints] = useState('10');
   const [loading, setLoading] = useState(false);
-  const [mapLoading, setMapLoading] = useState(false);
 
-  const handleSelectLocation = async () => {
-    setMapLoading(true);
-    try {
-      const result = await (bridge.send as any)('VKWebAppShowMap', {
-        lat: 55.751244,
-        long: 37.618423,
-        zoom: 12,
-      });
-      if (result && typeof result === 'object' && 'lat' in result && 'long' in result) {
-        const address = `📍 ${result.lat.toFixed(6)}, ${result.long.toFixed(6)}`;
-        setLocation(address);
-      }
-    } catch (err) {
-      console.error('Карта отменена или ошибка:', err);
-    } finally {
-      setMapLoading(false);
-    }
+  // Открыть Яндекс.Карты для выбора места
+  const openYandexMaps = () => {
+    window.open('https://yandex.ru/maps/?ll=37.618423%2C55.751244&z=12', '_blank');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,17 +66,25 @@ export const CreateAction = ({ id }: { id: string }) => {
             <Input
               value={location}
               onChange={e => setLocation(e.target.value)}
-              placeholder="Введите адрес или выберите на карте"
+              placeholder="Введите адрес или координаты"
             />
           </FormItem>
-          <Div>
+          <Div style={{ display: 'flex', gap: 8 }}>
             <Button
-              size="m"
+              size="l"
               mode="secondary"
-              onClick={handleSelectLocation}
-              loading={mapLoading}
+              onClick={openYandexMaps}
             >
-              🗺️ Выбрать на карте
+              🗺️ Открыть карту
+            </Button>
+            <Button
+              size="l"
+              mode="secondary"
+              onClick={() => {
+                navigator.clipboard?.writeText(location).then(() => alert('Адрес скопирован'));
+              }}
+            >
+              📋 Копировать
             </Button>
           </Div>
           <FormItem top="Макс. участников">
