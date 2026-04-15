@@ -65,7 +65,8 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
       setParticipants(res.data);
     } catch (err: any) {
       console.error('Ошибка загрузки участников:', err);
-      alert('Не удалось загрузить участников. Проверьте права организатора.');
+      const errorMessage = err.response?.data?.error || err.message || 'Не удалось загрузить участников';
+      alert(`Ошибка: ${errorMessage}`);
     }
   };
 
