@@ -5,6 +5,8 @@ import { CreateAction } from './panels/CreateAction';
 import { ActionDetails } from './panels/ActionDetails';
 import { InventoryManager } from './panels/InventoryManager';
 import '@vkontakte/vkui/dist/vkui.css';
+import { RequestOrganizer } from './panels/RequestOrganizer';
+import { OrganizerRequests } from './panels/OrganizerRequests';
 
 const App = () => {
   const [activePanel, setActivePanel] = useState('home');
@@ -23,9 +25,14 @@ const App = () => {
         setActivePanel('inventory');
       } else if (hash === '/create-action') {
         setActivePanel('create-action');
+      } else if (hash === '/request-organizer') {
+        setActivePanel('request-organizer');
+      } else if (hash === '/organizer-requests') {
+        setActivePanel('organizer-requests');
       } else {
         setActivePanel('home');
       }
+      
     };
 
     window.addEventListener('hashchange', handleHashChange);
@@ -42,6 +49,8 @@ const App = () => {
             <Home id="home" />
             <CreateAction id="create-action" />
             <ActionDetails id="action-details" actionId={actionId} />
+            <RequestOrganizer id="request-organizer" onBack={() => window.location.hash = '#/'} />
+            <OrganizerRequests id="organizer-requests" onBack={() => window.location.hash = '#/'} />
             <InventoryManager
               id="inventory"
               actionId={actionId!}

@@ -157,6 +157,31 @@ export const Home = ({ id }: { id: string }) => {
           </Button>
         </Div>
       )}
+
+      {!isOrganizer && (
+        <Div>
+          <Button
+            size="l"
+            stretched
+            mode="secondary"
+            onClick={() => { window.location.hash = '#/request-organizer'; }}
+          >
+            📝 Стать организатором
+          </Button>
+        </Div>
+      )}
+      {isOrganizer && (
+        <Div>
+          <Button
+            size="l"
+            stretched
+            mode="secondary"
+            onClick={() => { window.location.hash = '#/organizer-requests'; }}
+          >
+            📋 Заявки на организатора
+          </Button>
+        </Div>
+      )}
     </Panel>
   );
 };
