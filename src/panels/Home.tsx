@@ -29,6 +29,7 @@ export const Home = ({ id }: { id: string }) => {
   const [loading, setLoading] = useState(true);
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [totalPoints, setTotalPoints] = useState(0);
+  const [userName, setUserName] = useState('');
 
   // Функция для получения актуального баланса с сервера
   const fetchMyStats = async () => {
@@ -39,7 +40,15 @@ export const Home = ({ id }: { id: string }) => {
       console.error('Ошибка получения баланса:', err);
     }
   };
+  
+  // Загрузка имени пользователя
+  useEffect(() => {
+    api.get('/actions/my-profile')
+      .then(res => setUserName(res.data.name || 'Участник'))
+      .catch(() => setUserName('Участник'));
+  }, []);
 
+  // Основной useEffect для загрузки акций, роли и баланса
   useEffect(() => {
     // Загрузка списка акций
     api.get('/actions')
@@ -104,14 +113,12 @@ export const Home = ({ id }: { id: string }) => {
       <PanelHeader>ЭкоДесант 🌿</PanelHeader>
 
       {/* Блок с личным балансом */}
-      <Group>
-        <Div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text weight="2">Мой вклад:</Text>
-          <Counter size="m">
-            {totalPoints} баллов
-          </Counter>
-        </Div>
-      </Group>
+      <Div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text weight="2">{userName || 'Участник'}</Text>
+        <Counter size="m">
+          {totalPoints} баллов
+        </Counter>
+      </Div>
 
       <Group header={<Header>Ближайшие акции</Header>}>
         {loading && <Div>Загрузка...</Div>}
