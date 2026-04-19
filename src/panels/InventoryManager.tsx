@@ -14,6 +14,7 @@ import {
   Checkbox,
 } from '@vkontakte/vkui';
 import api from '../api/client';
+import bridge from '@vkontakte/vk-bridge';
 
 interface InventoryItem {
   id: number;
@@ -121,58 +122,66 @@ export const InventoryManager = ({ id, actionId, onBack }: { id: string; actionI
     }
   };
 
-  const handleDownloadReport = async () => {
-    try {
-      const params = new URLSearchParams({
-        format: reportFormat,
-        attended_only: String(attendedOnly),
-        include_inventory: String(includeInventory),
-        sort: sortBy,
-      });
-      const res = await api.get(`/actions/${actionId}/report?${params}`, {
-        responseType: reportFormat === 'csv' ? 'blob' : 'json',
-      });
-      if (reportFormat === 'csv') {
-        const url = window.URL.createObjectURL(new Blob([res.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `action_${actionId}_report.csv`);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      } else {
-        const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `action_${actionId}_report.json`);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      }
-    } catch (err) {
-      alert('Ошибка скачивания отчёта');
-    }
-  };
-
-  const handleDownloadExcel = async () => {
-    try {
-      const params = new URLSearchParams({
-        attended_only: String(attendedOnly),
-        include_inventory: String(includeInventory),
-      });
-      const res = await api.get(`/actions/${actionId}/report/excel?${params}`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
+const handleDownloadReport = async () => {
+  try {
+    const user = await bridge.send('VKWebAppGetUserInfo');
+    const vkId = user.id;
+    const params = new URLSearchParams({
+      format: reportFormat,
+      attended_only: String(attendedOnly),
+      include_inventory: String(includeInventory),
+      sort: sortBy,
+      vk_id: String(vkId),
+    });
+    const response = await api.get(`/actions/${actionId}/report?${params}`, {
+      responseType: reportFormat === 'csv' ? 'blob' : 'json',
+    });
+    if (reportFormat === 'csv') {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `action_${actionId}_report.xlsx`);
+      link.setAttribute('download', `action_${actionId}_report.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (err) {
-      alert('Ошибка скачивания Excel-отчёта');
+    } else {
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `action_${actionId}_report.json`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     }
-  };
+  } catch (err) {
+    alert('Ошибка скачивания отчёта');
+  }
+};
+
+const handleDownloadExcel = async () => {
+  try {
+    const user = await bridge.send('VKWebAppGetUserInfo');
+    const vkId = user.id;
+    const params = new URLSearchParams({
+      attended_only: String(attendedOnly),
+      include_inventory: String(includeInventory),
+      vk_id: String(vkId),
+    });
+    const _res = await api.get(`/actions/${actionId}/report/excel?${params}`, {
+      responseType: 'blob',
+    });
+    const url = window.URL.createObjectURL(new Blob([_res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `action_${actionId}_report.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (err) {
+    alert('Ошибка скачивания Excel-отчёта');
+  }
+};
 
   return (
     <Panel id={id}>
